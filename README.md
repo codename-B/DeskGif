@@ -62,3 +62,4 @@ Pull requests are welcome. Please run `npm test` before submitting and ensure pl
 - gifsicle - GIF optimization
 - Electron - Desktop framework
 - React - UI framework
+- Test Media - https://github.com/shotstack/test-media
