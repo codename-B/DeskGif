@@ -83,11 +83,22 @@ export const handleClip = async ({
       const fileExt = file.name.split('.').pop();
       const outputPath = filePath.replace(/\.[^.]+$/, `_clipped.${fileExt}`);
 
-      const startParts = settings.clipStartTime.split(':').map(Number);
-      const endParts = settings.clipEndTime.split(':').map(Number);
+      const parseTimestamp = (value) => {
+        if (!value || typeof value !== 'string') return null;
+        const parts = value.split(':').map(Number);
+        if (parts.length !== 3 || parts.some((p) => !Number.isFinite(p) || p < 0)) return null;
+        return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      };
 
-      const startSeconds = startParts[0] * 3600 + startParts[1] * 60 + startParts[2];
-      const endSeconds = endParts[0] * 3600 + endParts[1] * 60 + endParts[2];
+      const startSeconds = parseTimestamp(settings.clipStartTime);
+      const endSeconds = parseTimestamp(settings.clipEndTime);
+
+      if (startSeconds === null || endSeconds === null) {
+        toast.error('Please enter valid times in HH:MM:SS format.');
+        setProcessing(false);
+        return;
+      }
+
       const duration = endSeconds - startSeconds;
 
       if (duration <= 0) {
@@ -96,11 +107,11 @@ export const handleClip = async ({
         return;
       }
 
-      const clipArgs = [
-        '-ss', settings.clipStartTime,
-        '-t', duration.toString(),
-        '-c', 'copy'
-      ];
+      // Fast-but-approximate seek: place -ss before -i and stream copy
+      const clipArgs = {
+        preInput: ['-ss', settings.clipStartTime],
+        postInput: ['-t', duration.toString(), '-c', 'copy']
+      };
 
       const processId = generateProcessId('ffmpeg_clip');
       if (registerProcess) registerProcess(processId);

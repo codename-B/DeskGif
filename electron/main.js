@@ -261,6 +261,19 @@ ipcMain.handle('save-temp-file', async (event, name, data) => {
 
 // Execute FFmpeg command
 ipcMain.handle('ffmpeg', async (event, args, inputPath, outputPath, useGpu = false, processIdParam = null) => {
+  // Support passing pre/post input args to control seek placement (fast seeks, etc.)
+  let preInputArgs = [];
+  let postInputArgs = [];
+
+  if (Array.isArray(args)) {
+    postInputArgs = args;
+  } else if (args && typeof args === 'object') {
+    if (Array.isArray(args.preInput)) preInputArgs = args.preInput;
+    if (Array.isArray(args.postInput)) postInputArgs = args.postInput;
+  } else {
+    throw new Error('Invalid command arguments provided');
+  }
+
   // Validate inputs
   if (!validateFilePath(inputPath)) {
     throw new Error('Invalid input file path provided');
@@ -268,7 +281,7 @@ ipcMain.handle('ffmpeg', async (event, args, inputPath, outputPath, useGpu = fal
   if (!validateOutputPath(outputPath)) {
     throw new Error('Invalid output file path provided');
   }
-  if (!validateCommandArgs(args)) {
+  if (!validateCommandArgs(preInputArgs) || !validateCommandArgs(postInputArgs)) {
     throw new Error('Invalid command arguments provided');
   }
 
@@ -292,7 +305,7 @@ ipcMain.handle('ffmpeg', async (event, args, inputPath, outputPath, useGpu = fal
       }
     }
 
-    fullArgs.push('-i', inputPath, ...args, tempOutput);
+    fullArgs.push(...preInputArgs, '-i', inputPath, ...postInputArgs, tempOutput);
 
     const processId = processIdParam || `ffmpeg_${Date.now()}`;
     const childProcess = spawn(ffmpegPath, fullArgs);
@@ -685,11 +698,12 @@ ipcMain.handle('get-gif-frames', async (event, inputPath) => {
             // Read all generated thumbnail files
             const result = [];
             const tempDirName = path.dirname(thumbnailPattern);
-            const basePattern = path.basename(thumbnailPattern).replace('%03d', '');
+            const basePattern = path.basename(thumbnailPattern);
 
             for (let i = 0; i < frameInfo.length; i++) {
               // FFmpeg uses 1-based indexing for output
-              const thumbnailPath = path.join(tempDirName, basePattern.replace('*', String(i + 1).padStart(3, '0')));
+              const paddedIndex = String(i + 1).padStart(3, '0');
+              const thumbnailPath = path.join(tempDirName, basePattern.replace('%03d', paddedIndex));
 
               try {
                 if (fs.existsSync(thumbnailPath)) {

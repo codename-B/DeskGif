@@ -33,6 +33,13 @@ export const handleSpeedChange = async ({
 
     // Build the filter chain
     let filters = [];
+    let audioFilters = [];
+
+    if (!Number.isFinite(settings.speedMultiplier) || settings.speedMultiplier <= 0) {
+      toast.error('Speed must be greater than 0.');
+      setProcessing(false);
+      return;
+    }
 
     // Frame skipping - select every Nth frame
     if (settings.skipFrames > 1) {
@@ -47,6 +54,32 @@ export const handleSpeedChange = async ({
       // setpts adjusts timestamps. Divide by speed to speed up (e.g., 2x = PTS/2)
       filters.push(`setpts=PTS/${settings.speedMultiplier}`);
       needsProcessing = true;
+
+      // Audio must be sped up/down as well; chain atempo filters in 0.5–2.0 range
+      const target = settings.speedMultiplier;
+      const tempoFilters = [];
+      let remaining = target;
+
+      const clampSegment = (value) => Math.max(0.5, Math.min(2, value));
+
+      // Decompose the factor into allowed segments
+      while (remaining > 2) {
+        tempoFilters.push('atempo=2');
+        remaining /= 2;
+      }
+      while (remaining < 0.5) {
+        tempoFilters.push('atempo=0.5');
+        remaining /= 0.5;
+      }
+
+      const finalSegment = clampSegment(remaining);
+      if (Math.abs(finalSegment - 1) > 1e-3) {
+        tempoFilters.push(`atempo=${finalSegment}`);
+      }
+
+      if (tempoFilters.length > 0) {
+        audioFilters.push(tempoFilters.join(','));
+      }
     }
 
     if (!needsProcessing) {
@@ -134,7 +167,13 @@ export const handleSpeedChange = async ({
         args.push('-vsync', 'vfr');
       }
 
-      args.push('-vf', filterString, '-c:a', 'copy');
+      args.push('-vf', filterString);
+
+      if (audioFilters.length > 0) {
+        args.push('-af', audioFilters.join(','));
+      } else {
+        args.push('-c:a', 'copy');
+      }
 
       const processId = generateProcessId('ffmpeg_speed');
       if (registerProcess) registerProcess(processId);

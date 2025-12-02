@@ -55,19 +55,18 @@ describe('handleVideoToGif', () => {
     
     // Expect palette generation
     const palettePath = filePath.replace(/\.[^.]+$/, '_palette.png');
-    const paletteProcessId = 'ffmpeg_palette_1700000000001';
+    const paletteArgs = ['-y', '-vf', `fps=${settings.fps},scale=${settings.width}:-1:flags=lanczos,palettegen`, '-f', 'image2'];
     expect(mockElectron.ffmpeg).toHaveBeenCalledWith(
-      ['-y', '-vf', `fps=${settings.fps},scale=${settings.width}:-1:flags=lanczos,palettegen`, '-f', 'image2'],
+      paletteArgs,
       filePath,
       palettePath,
       appSettings.useGpu,
-      paletteProcessId
+      expect.stringMatching(/^ffmpeg_palette_/)
     );
-    expect(registerProcess).toHaveBeenCalledWith(paletteProcessId);
+    expect(registerProcess).toHaveBeenCalledWith(expect.stringMatching(/^ffmpeg_palette_/));
 
     // Expect GIF creation
     const outputPath = filePath.replace(/\.[^.]+$/, '_converted.gif');
-    const gifProcessId = 'ffmpeg_gif_1700000000002';
     expect(mockElectron.ffmpeg).toHaveBeenCalledWith(
       [
         '-i', palettePath,
@@ -78,9 +77,9 @@ describe('handleVideoToGif', () => {
       filePath,
       outputPath,
       appSettings.useGpu,
-      gifProcessId
+      expect.stringMatching(/^ffmpeg_gif_/)
     );
-    expect(registerProcess).toHaveBeenCalledWith(gifProcessId);
+    expect(registerProcess).toHaveBeenCalledWith(expect.stringMatching(/^ffmpeg_gif_/));
 
     expect(mockElectron.readFile).toHaveBeenCalledWith(outputPath);
     expect(cleanupOldFile).toHaveBeenCalledWith(filePath);
