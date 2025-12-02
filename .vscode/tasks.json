@@ -1,0 +1,56 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start React Dev Server",
+      "type": "npm",
+      "script": "dev:react",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^\\s*$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE.*ready in",
+          "endsPattern": "Local:.*http://localhost:3000"
+        }
+      }
+    },
+    {
+      "label": "Stop React Dev Server",
+      "type": "process",
+      "command": "echo",
+      "args": ["React dev server stopped"],
+      "windows": {
+        "command": "taskkill",
+        "args": ["/F", "/IM", "node.exe", "/FI", "WINDOWTITLE eq npm*"]
+      },
+      "linux": {
+        "command": "killall",
+        "args": ["node"]
+      },
+      "osx": {
+        "command": "killall",
+        "args": ["node"]
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build",
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "npm",
+      "script": "install",
+      "problemMatcher": []
+    }
+  ]
+}

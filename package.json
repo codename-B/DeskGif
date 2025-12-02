@@ -1,0 +1,93 @@
+{
+  "name": "deskgif",
+  "version": "0.0.1",
+  "description": "Desktop GIF and video editor powered by ImageMagick, FFmpeg, and gifsicle",
+  "main": "electron/main.js",
+  "author": "codename_B",
+  "scripts": {
+    "start": "electron .",
+    "dev": "cross-env NODE_OPTIONS=--no-deprecation concurrently \"npm run dev:react\" \"wait-on http://localhost:3000 && electron .\"",
+    "dev:react": "vite --port 3000",
+    "build": "vite build && electron-builder",
+    "build:ci": "vite build && electron-builder --publish=never",
+    "postinstall": "electron-builder install-app-deps",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@radix-ui/react-slider": "^1.3.6",
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.263.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.6.0",
+    "tailwind-merge": "^3.3.1",
+    "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.14",
+    "@tailwindcss/vite": "^4.1.14",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.6.2",
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.0.0",
+    "cross-env": "^10.1.0",
+    "electron": "^38.2.0",
+    "electron-builder": "^25.1.8",
+    "jsdom": "^27.2.0",
+    "png-to-ico": "^3.0.1",
+    "postcss": "^8.5.6",
+    "sharp": "^0.34.4",
+    "tailwindcss-animate": "^1.0.7",
+    "vite": "^7.1.8",
+    "vitest": "^4.0.14",
+    "wait-on": "^7.0.0"
+  },
+  "build": {
+    "directories": {
+      "output": "release"
+    },
+    "appId": "com.desk.gif",
+    "productName": "DeskGif",
+    "files": [
+      "dist/**/*",
+      "!dist/win-unpacked{,/**}",
+      "!dist/*.exe",
+      "!dist/*.7z",
+      "!dist/*.blockmap",
+      "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "binaries",
+        "to": "binaries",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Graphics"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.graphics-design",
+      "icon": "icon.icns"
+    }
+  }
+}

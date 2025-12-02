@@ -1,0 +1,25 @@
+{
+  "style": "default",
+  "path": "src/components/modern-ui",
+  "theme": "default",
+  "typescript": false,
+  "tailwind": true,
+  "framework": "vite",
+  "components": [
+    {
+      "name": "button",
+      "version": "latest",
+      "installedAt": "2025-10-05T19:43:15.649Z"
+    },
+    {
+      "name": "slider",
+      "version": "latest",
+      "installedAt": "2025-10-05T20:02:27.817Z"
+    }
+  ],
+  "aliases": {
+    "cn": "@/lib/utils",
+    "hook": "@/hooks"
+  },
+  "tailwindVersion": "v4"
+}

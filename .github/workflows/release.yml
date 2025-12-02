@@ -1,0 +1,86 @@
+name: Build Releases
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch media binaries (ffmpeg / ImageMagick / gifsicle)
+        shell: pwsh
+        run: |
+          choco install ffmpeg imagemagick gifsicle --yes --no-progress
+          $binRoot = Join-Path $PWD "binaries\win32"
+          New-Item -ItemType Directory -Force -Path $binRoot | Out-Null
+
+          function CopyIfExists($pattern) {
+            Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue | ForEach-Object {
+              Copy-Item $_.FullName $binRoot -Force
+            }
+          }
+
+          CopyIfExists "C:\ProgramData\chocolatey\lib\ffmpeg\tools\**\ffmpeg.exe"
+          CopyIfExists "C:\ProgramData\chocolatey\lib\ffmpeg\tools\**\ffprobe.exe"
+          CopyIfExists "C:\ProgramData\chocolatey\lib\ffmpeg\tools\**\ffplay.exe"
+
+          # Gifsicle / gifdiff
+          CopyIfExists "C:\ProgramData\chocolatey\lib\gifsicle\tools\**\gifsicle.exe"
+          CopyIfExists "C:\ProgramData\chocolatey\lib\gifsicle\tools\**\gifdiff.exe"
+
+          # ImageMagick (copy full tool payload to keep config XMLs)
+          $magickDir = Get-ChildItem "C:\ProgramData\chocolatey\lib\imagemagick*\tools" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($magickDir) {
+            Copy-Item "$($magickDir.FullName)\*" $binRoot -Recurse -Force
+          } else {
+            Write-Warning "ImageMagick not found after install; build may fail."
+          }
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build app (portable + installer, no auto-publish)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build:ci
+
+      - name: Create GitHub Release and upload installers
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            release/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeskGif-windows
+          path: |
+            release/*.exe
+          if-no-files-found: error
+          retention-days: 7
