@@ -50,3 +50,15 @@ A powerful desktop application for editing GIFs and videos, powered by ImageMagi
 - **FFmpeg** - Video processing
 - **ImageMagick** - Image manipulation
 - **gifsicle** - GIF optimization
+
+## Contributing
+
+Pull requests are welcome. Please run `npm test` before submitting and ensure platform binaries are available if you modify build/packaging.
+
+## Acknowledgments
+
+- FFmpeg - Video processing
+- ImageMagick - Image manipulation
+- gifsicle - GIF optimization
+- Electron - Desktop framework
+- React - UI framework
