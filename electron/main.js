@@ -655,13 +655,27 @@ ipcMain.handle('get-gif-frames', async (event, inputPath) => {
         const frameInfo = [];
 
         // Extract frame delays (in centiseconds, 100ths of a second)
+        // gifsicle -I outputs frame info across multiple lines:
+        //   + image #0
+        //     delay 20
+        //   + image #1
+        //     delay 30
+        let currentFrameNum = null;
+
         for (const line of lines) {
-          const match = line.match(/image\s+#(\d+).*?delay\s+(\d+\.?\d*)/i);
-          if (match) {
-            const frameNum = parseInt(match[1]);
-            const delayCs = parseFloat(match[2]);
+          // Look for image lines
+          const imageMatch = line.match(/image\s+#(\d+)/i);
+          if (imageMatch) {
+            currentFrameNum = parseInt(imageMatch[1]);
+          }
+
+          // Look for delay lines and associate with the last seen frame
+          const delayMatch = line.match(/delay\s+(\d+\.?\d*)/i);
+          if (delayMatch && currentFrameNum !== null) {
+            const delayCs = parseFloat(delayMatch[1]);
             const delayMs = Math.round(delayCs * 10); // Convert to milliseconds
-            frameInfo.push({ frameNum, delay: delayMs });
+            frameInfo.push({ frameNum: currentFrameNum, delay: delayMs });
+            currentFrameNum = null; // Reset to avoid duplicate entries
           }
         }
 
