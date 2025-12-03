@@ -1,6 +1,6 @@
 {
   "name": "deskgif",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Desktop GIF and video editor powered by ImageMagick, FFmpeg, and gifsicle",
   "main": "electron/main.js",
   "author": "codename_B",
